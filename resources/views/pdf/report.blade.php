@@ -33,9 +33,8 @@
                 Cara Bayar: {{ ucfirst($order->payment_method) }} <br>
                 @if($order->payment_method === 'prepaid' && $order->payment_prepaid === 'bank_transfer')
                     Nama Bank: {{ $order->userAccount->bank_name ?? '-' }} <br>
-                    Nomor Rekening: {{ $order->userAccount->account_number ?? '-' }}
                 @else
-                    Metode Prepaid: {{ $order->payment_prepaid ?? '-' }}
+                    Metode Postpaid: COD
                 @endif
             </td>
         </tr>

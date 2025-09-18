@@ -70,8 +70,11 @@ class ProductController extends Controller
             \Log::info('Image uploaded', ['path' => $imagePath]);
         }
 
+        $code = Product::generateProductCode($request->category_id);
+
         $product = Product::create([
             'name' => $request->name,
+            'code' => $code,
             'description' => $request->description,
             'price' => $request->price,
             'category_id' => $request->category_id,
@@ -117,8 +120,14 @@ class ProductController extends Controller
             $imagePath = $request->file('photo')->store('products', 'public');
         }
 
+        $code = $product->code;
+        if ($request->category_id != $product->category_id) {
+            $code = Product::generateProductCode($request->category_id);
+        }
+
         $product->update([
             'name' => $request->name,
+            'code' => $code,
             'description' => $request->description,
             'price' => $request->price,
             'category_id' => $request->category_id,

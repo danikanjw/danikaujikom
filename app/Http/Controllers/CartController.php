@@ -163,6 +163,7 @@ class CartController extends Controller
         $request->validate([
             'shipping_service_id' => 'required|exists:shipping_services,shipping_service_id',
             'payment_method' => 'required|in:postpaid,prepaid',
+            'payment_account_id' => 'required_if:payment_method,prepaid|exists:user_accounts,payment_account_id',
             'account_number' => 'required_if:payment_method,prepaid',
             'phone_number' => 'required_if:payment_method,postpaid',
         ]);
@@ -206,7 +207,9 @@ class CartController extends Controller
         $order->shipping_service_id = $request->shipping_service_id;
         $order->payment_method = $request->payment_method;
         $order->payment_prepaid = $request->payment_method === 'prepaid' ? 'bank_transfer' : 'paypal';
-        $order->payment_account_id = $request->payment_account_id ? UserAccount::where('bank_name', $request->payment_account_id)->value('payment_account_id') : null;
+        // $order->payment_account_id = $request->payment_account_id ? UserAccount::where('bank_name', $request->payment_account_id)->value('payment_account_id') : null;
+        $order->payment_account_id = $request->payment_account_id ?? null;
+
         $order->shipping_address = User::find($userId)->address;
         $order->save();
 
@@ -226,20 +229,18 @@ class CartController extends Controller
         }
 
 
-            // Generate PDF invoice
-            $pdf = Pdf::loadView('pdf.report', compact('order'));
+        // Generate PDF invoice
+        $pdf = Pdf::loadView('pdf.report', compact('order'));
 
-            // Kirim email
-            $pdfContent = $pdf->output();
-            Mail::to($order->user->email)->send(new SendReportMail($pdfContent));
+        // Kirim email
+        $pdfContent = $pdf->output();
+        Mail::to($order->user->email)->send(new SendReportMail($pdfContent));
 
-            // Kosongkan cart
-            Cart::where('user_id', $userId)->delete();
+        // Kosongkan cart
+        Cart::where('user_id', $userId)->delete();
 
-            DB::commit();
+        DB::commit();
 
-            return redirect()->route('product')->with('success', 'Order processed successfully.');
-    
+        return redirect()->route('product')->with('success', 'Order processed successfully.');
     }
-
 }

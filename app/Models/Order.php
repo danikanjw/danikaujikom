@@ -38,4 +38,10 @@ class Order extends Model
     {
         return $this->belongsTo(ShippingService::class, 'shipping_service_id');
     }
+
+    public function userAccount()
+{
+    return $this->belongsTo(UserAccount::class, 'payment_account_id', 'payment_account_id');
+}
+
 }
