@@ -8,20 +8,36 @@
     <title>Form Registrasi</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ asset('css/main.css') }}?v={{ time() }}" rel="stylesheet">
+    <link href="{{ asset('css/login.css') }}?v={{ time() }}" rel="stylesheet">
 
 </head>
 
 <body>
     <div class="glass-card">
         <h4 class="form-title">FORM REGISTRASI</h4>
-        <form method="" action="">
+        <form method="POST" action="{{ route('register') }}">
             @csrf
+            @if ($errors->any())
+                <div class="alert alert-danger" role="alert">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <div class="row mb-3">
                 <label for="username" class="col-12 col-sm-3 col-form-label">Username</label>
                 <div class="col-12 col-sm-9">
                     <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="fullname" class="col-12 col-sm-3 col-form-label">Full Name</label>
+                <div class="col-12 col-sm-9">
+                    <input type="text" id="fullname" name="fullname" class="form-control" required>
                 </div>
             </div>
 
@@ -77,11 +93,11 @@
             <div class="row mb-3">
                 <label for="city" class="col-12 col-sm-3 col-form-label">City</label>
                 <div class="col-12 col-sm-9">
-                    <select id="city" name="city" class="form-select">
-                        <option value="Ahmedabad">Ahmedabad</option>
-                        <option value="Jakarta">Jakarta</option>
-                        <option value="Bandung">Bandung</option>
-                        <option value="Surabaya">Surabaya</option>
+                    <select id="city" name="city" class="form-select" required>
+                        <option value="">Select City</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->name }}">{{ $city->name }}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>
@@ -107,7 +123,7 @@
         </form>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
