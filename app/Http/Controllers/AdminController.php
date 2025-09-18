@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Order;
+use App\Models\Feedback;
 use Illuminate\Support\Facades\Session;
 
 class AdminController extends Controller
@@ -104,5 +105,19 @@ class AdminController extends Controller
         $order = Order::findOrFail($orderId);
         $order->update(['status' => 'shipped']);
         return redirect()->route('admin.manage_orders')->with('success', 'Order status updated to shipped.');
+    }
+
+    // Feedback management
+    public function manageFeedback()
+    {
+        $feedbacks = Feedback::with('user')->paginate(10);
+        return view('admin.manage_feedback', compact('feedbacks'));
+    }
+
+    public function deleteFeedback($feedbackId)
+    {
+        $feedback = Feedback::findOrFail($feedbackId);
+        $feedback->delete();
+        return redirect()->route('admin.dashboard')->with('success', 'Feedback deleted successfully.');
     }
 }

@@ -109,6 +109,10 @@ Route::delete('/admin/customers/{userId}', [AdminController::class, 'deleteCusto
 Route::get('/admin/orders', [AdminController::class, 'manageOrders'])->name('admin.manage_orders')->middleware(['auth.session', 'role:admin']);
 Route::post('/admin/orders/{orderId}/ship', [AdminController::class, 'shipOrder'])->name('admin.ship_order')->middleware(['auth.session', 'role:admin']);
 
+// Admin feedback management routes
+Route::get('/admin/feedback', [AdminController::class, 'manageFeedback'])->name('admin.manage_feedback')->middleware(['auth.session', 'role:admin']);
+Route::delete('/admin/feedback/{feedbackId}', [AdminController::class, 'deleteFeedback'])->name('admin.delete_feedback')->middleware(['auth.session', 'role:admin']);
+
 // Register
 Route::get('/register', function () {
     $cities = \App\Models\City::all();
@@ -116,6 +120,12 @@ Route::get('/register', function () {
 })->name('register');
 
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
+// Feedback routes
+use App\Http\Controllers\FeedbackController;
+
+Route::get('/feedback', [FeedbackController::class, 'showForm'])->name('feedback.form')->middleware('auth.session');
+Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.submit')->middleware('auth.session');
 
 Route::get('/send-pdf', function () {
     // Generate PDF di memory

@@ -27,6 +27,7 @@
               <a href="{{ route('profile') }}" class="btn btn-info me-2">Profile</a>
               <a href="{{ route('logout') }}" class="btn btn-danger">Logout</a>
             @endif
+            <a href="{{ route('feedback.form') }}" class="btn btn-secondary ms-2">Feedback</a>
           @endif
         @else
         <a href="{{ route('vendor.apply') }}" class="btn btn-warning me-2">Ajukan Menjadi Vendor</a>
