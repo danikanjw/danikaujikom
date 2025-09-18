@@ -66,7 +66,11 @@
                   <input type="text" class="form-control" id="contact_no" name="contact_no" value="{{ old('contact_no', $user->contact_no) }}" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Profile</button>
-                <a href="{{ route('product') }}" class="btn btn-secondary ms-2">Back to Products</a>
+                @if(Session::get('role') === 'vendor')
+                  <a href="{{ route('vendor.dashboard') }}" class="btn btn-secondary ms-2">Back to Dashboard</a>
+                @else
+                  <a href="{{ route('product') }}" class="btn btn-secondary ms-2">Back to Products</a>
+                @endif
               </form>
             </div>
           </div>

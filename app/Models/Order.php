@@ -19,6 +19,11 @@ class Order extends Model
         'payment_prepaid', 'shipping_service_id', 'payment_account_id'
     ];
 
+    protected $casts = [
+    'order_date' => 'datetime',
+];
+
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

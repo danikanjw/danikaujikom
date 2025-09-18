@@ -86,6 +86,9 @@
                 @endif
                 <div class="card-body d-flex flex-column">
                   <h5 class="card-title">{{ $product->name }}</h5>
+                  @if($product->vendor)
+                    <p class="card-text text-muted small mb-1">by {{ $product->vendor->username }}</p>
+                  @endif
                   <p class="card-text">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
                   <div class="d-flex justify-content-center gap-2 mt-auto">
                     <button type="button" class="btn btn-primary btn-view" data-bs-toggle="modal" data-bs-target="#productDetailModal" data-name="{{ $product->name }}" data-price="{{ $product->price }}" data-quantity="{{ $product->quantity }}" data-description="{{ $product->description }}" data-image="{{ $product->image_url }}">View</button>
