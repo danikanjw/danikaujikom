@@ -7,6 +7,7 @@ use Carbon\Carbon;
 
 class Feedback extends Model
 {
+    protected $table = 'feedbacks';
     protected $primaryKey = 'feedback_id';
     protected $fillable = ['user_id', 'message', 'created_at', 'is_approved'];
     public $timestamps = false;
