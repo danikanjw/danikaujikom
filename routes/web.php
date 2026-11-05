@@ -81,11 +81,51 @@ use App\Http\Controllers\AdminController;
 
 // Admin routes
 Route::get('/admin/dashboard', function () {
-    $totalUsers = \App\Models\User::count();
-    $totalProducts = \App\Models\Product::count();
-    $totalOrders = \App\Models\Order::count();
+    $totalCustomers = \App\Models\User::where('role', 'customer')->count();
+    $activeStores = \App\Models\User::where('role', 'vendor')->where('is_active', true)->count();
+    $pendingStoreRequests = \App\Models\User::whereNull('role')->where('is_active', false)->count();
     $recentFeedback = \App\Models\Feedback::with('user')->latest()->take(5)->get();
-    return view('admin.dashboard', compact('totalUsers', 'totalProducts', 'totalOrders', 'recentFeedback'));
+    $periodStart = now()->subMonths(11)->startOfMonth();
+    $paidOrders = \App\Models\Order::whereIn('status', ['paid', 'shipped']);
+    $salesByMonth = (clone $paidOrders)
+        ->where('order_date', '>=', $periodStart)
+        ->get(['order_date', 'total_amount'])
+        ->groupBy(fn ($order) => $order->order_date->format('Y-m'));
+    $transactionLabels = collect(range(0, 11))
+        ->map(fn ($month) => $periodStart->copy()->addMonths($month)->format('M Y'));
+    $transactionTotals = $transactionLabels->map(function ($label, $index) use ($periodStart, $salesByMonth) {
+        $month = $periodStart->copy()->addMonths($index)->format('Y-m');
+        return (float) ($salesByMonth->get($month, collect())->sum('total_amount'));
+    });
+    $orderStatusDistribution = \App\Models\Order::query()
+        ->selectRaw('status, COUNT(*) as total')
+        ->groupBy('status')
+        ->get()
+        ->map(fn ($order) => ['status' => $order->status, 'total' => (int) $order->total]);
+    $topStores = \Illuminate\Support\Facades\DB::table('order_items')
+        ->join('products', 'order_items.product_id', '=', 'products.product_id')
+        ->join('users', 'products.vendor_id', '=', 'users.user_id')
+        ->join('orders', 'order_items.order_id', '=', 'orders.order_id')
+        ->where('users.role', 'vendor')
+        ->where('users.is_active', true)
+        ->whereIn('orders.status', ['paid', 'shipped'])
+        ->select('users.user_id', 'users.name', 'users.username')
+        ->selectRaw('SUM(order_items.quantity * order_items.price) as total_sales')
+        ->groupBy('users.user_id', 'users.name', 'users.username')
+        ->orderByDesc('total_sales')
+        ->limit(10)
+        ->get();
+
+    return view('admin.dashboard', compact(
+        'totalCustomers',
+        'activeStores',
+        'pendingStoreRequests',
+        'recentFeedback',
+        'transactionLabels',
+        'transactionTotals',
+        'orderStatusDistribution',
+        'topStores'
+    ));
 })->name('admin.dashboard')->middleware(['auth.session', 'role:admin']);
 
 // Admin vendor approval routes

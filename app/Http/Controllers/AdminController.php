@@ -118,6 +118,6 @@ class AdminController extends Controller
     {
         $feedback = Feedback::findOrFail($feedbackId);
         $feedback->delete();
-        return redirect()->route('admin.dashboard')->with('success', 'Feedback deleted successfully.');
+        return redirect()->route('admin.manage_feedback')->with('success', 'Feedback deleted successfully.');
     }
 }

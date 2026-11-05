@@ -3,17 +3,24 @@
 @section('title', 'Pending Vendor Approvals')
 
 @section('content')
-<div class="container mt-5">
+<div class="container">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h1>Pending Vendor Approvals</h1>
+                    <div class="admin-list-toolbar mb-0">
+                        <div>
+                            <h1>Pending Vendor Approvals</h1>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
                     @if($pendingVendors->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table class="table admin-list-table">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -31,14 +38,13 @@
                                             <td>{{ $vendor->email }}</td>
                                             <td>{{ $vendor->city->name ?? 'N/A' }}</td>
                                             <td>
-                                                <form action="{{ route('admin.approve_vendor', $vendor->user_id) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                                                </form>
-                                                <form action="{{ route('admin.reject_vendor', $vendor->user_id) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                                                </form>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <form action="{{ route('admin.approve_vendor', $vendor->user_id) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm admin-action-primary">Approve</button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-danger btn-sm admin-action-danger" data-bs-toggle="modal" data-bs-target="#rejectVendorModal{{ $vendor->user_id }}">Reject</button>
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -47,13 +53,35 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <p class="text-muted">No pending vendor applications.</p>
+                            <p class="text-muted mb-0">No pending vendor applications.</p>
                         </div>
                     @endif
-                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@foreach($pendingVendors as $vendor)
+    <div class="modal fade" id="rejectVendorModal{{ $vendor->user_id }}" tabindex="-1" aria-labelledby="rejectVendorModalLabel{{ $vendor->user_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form action="{{ route('admin.reject_vendor', $vendor->user_id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="rejectVendorModalLabel{{ $vendor->user_id }}">Reject Vendor Application</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to reject the application from <strong>{{ $vendor->name }}</strong>?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger btn-sm admin-action-danger">Reject Application</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
 @endsection
