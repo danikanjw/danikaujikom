@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ShippingServiceSeeder::class,
             AdminSeeder::class,
-            StoreCategorySeeder::class,
+            PaymentAccountSeeder::class,
+            WarehouseSettingsSeeder::class,
         ]);
     }
 }

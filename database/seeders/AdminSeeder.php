@@ -12,9 +12,9 @@ class AdminSeeder extends Seeder
     {
         $now = now();
 
-        DB::table('users')->updateOrInsert(
-            ['email' => 'admin@example.com'],
-            [
+        DB::table('users')->upsert(
+            [[
+                'email' => 'admin@example.com',
                 'name' => 'Admin',
                 'username' => 'admin',
                 'password' => Hash::make('AdminPass2024!'),
@@ -22,7 +22,9 @@ class AdminSeeder extends Seeder
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ]
+            ]],
+            ['email'],
+            ['name', 'username', 'password', 'role', 'is_active', 'updated_at']
         );
     }
 }
