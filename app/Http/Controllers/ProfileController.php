@@ -34,10 +34,17 @@ class ProfileController extends Controller
             'address' => 'nullable|string|max:255',
             'city_id' => 'required|exists:cities,id',
             'contact_no' => 'required|string|max:20',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
 
         $user = User::find(Session::get('user_id'));
-        $user->update($request->only(['username', 'email', 'address', 'city_id', 'contact_no']));
+        $profileData = $request->only(['username', 'email', 'address', 'city_id', 'contact_no']);
+
+        if ($request->filled('password')) {
+            $profileData['password'] = Hash::make($request->password);
+        }
+
+        $user->update($profileData);
 
         return back()->with('success', 'Profile updated successfully.');
     }

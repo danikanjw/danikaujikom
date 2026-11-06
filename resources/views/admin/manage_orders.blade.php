@@ -3,17 +3,24 @@
 @section('title', 'Manage Orders')
 
 @section('content')
-<div class="container mt-5">
+<div class="container">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h1>Manage Orders</h1>
+                    <div class="admin-list-toolbar mb-0">
+                        <div>
+                            <h1>Manage Orders</h1>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
                     @if($orders->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table class="table admin-list-table">
                                 <thead>
                                     <tr>
                                         <th>Order ID</th>
@@ -31,17 +38,21 @@
                                             <td>{{ $order->order_id }}</td>
                                             <td>{{ $order->user->username ?? 'N/A' }}</td>
                                             <td>Rp {{ number_format($order->total_amount, 0, ',', '.') }}</td>
-                                            <td>{{ ucfirst($order->status) }}</td>
+                                            <td>
+                                                <span class="badge rounded-pill {{ $order->status === 'shipped' ? 'text-bg-success' : 'text-bg-warning' }}">
+                                                    {{ ucfirst($order->status) }}
+                                                </span>
+                                            </td>
                                             <td>{{ $order->shippingService->name ?? 'N/A' }}</td>
-                                            <td>{{ $order->order_date->format('d M Y') }}</td>
+                                            <td>{{ $order->order_date ? $order->order_date->format('d M Y') : 'N/A' }}</td>
                                             <td>
                                                 @if($order->status === 'paid')
-                                                    <form action="{{ route('admin.ship_order', $order->order_id) }}" method="POST" style="display:inline;">
+                                                    <form action="{{ route('admin.ship_order', $order->order_id) }}" method="POST">
                                                         @csrf
-                                                        <button type="submit" class="btn btn-success btn-sm">Mark as Shipped</button>
+                                                        <button type="submit" class="btn btn-sm admin-action-primary">Mark as Shipped</button>
                                                     </form>
                                                 @else
-                                                    <span class="text-success">Shipped</span>
+                                                    <span class="text-muted small">No action needed</span>
                                                 @endif
                                             </td>
                                         </tr>
@@ -51,10 +62,9 @@
                         </div>
                     @else
                         <div class="text-center py-5">
-                            <p class="text-muted">No orders to manage.</p>
+                            <p class="text-muted mb-0">No orders to manage.</p>
                         </div>
                     @endif
-                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
                 </div>
             </div>
         </div>
