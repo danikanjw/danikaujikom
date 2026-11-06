@@ -19,7 +19,7 @@
     .admin-category-toolbar p {
         margin: 0;
         color: #75839a;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     .admin-category-add {
@@ -28,7 +28,7 @@
         background: #1bb89a;
         color: #fff;
         padding: 5px 10px;
-        font-size: 13px;
+        font-size: 14px;
         /* font-weight: 650; */
     }
 
@@ -41,13 +41,13 @@
     .admin-category-edit,
     .admin-category-delete {
         padding: 3px 8px;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     .admin-category-table {
         margin-bottom: 0;
         color: #35445c;
-        font-size: 13px;
+        font-size: 14px;
     }
 
     .admin-category-table thead th {
@@ -55,7 +55,7 @@
         border-bottom: 1px solid #e6edf0;
         background: #f5f8f7;
         color: #75839a;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         letter-spacing: .5px;
         text-transform: uppercase;
@@ -88,13 +88,13 @@
         background: #1bb89a;
         color: #fff;
         padding: 5px 10px;
-        font-size: 13px;
+        font-size: 14px;
         /* font-weight: 650; */
     }
 
     .admin-category-modal .btn {
         /* padding: 5px 10px; */
-        font-size: 13px;
+        font-size: 14px;
     }
 
     @media (max-width: 575.98px) {
@@ -154,7 +154,7 @@
 
 <!-- Add Category Modal -->
 <div class="modal fade admin-category-modal" id="addCategoryModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form action="{{ route('admin.create_category') }}" method="POST">
                 @csrf
@@ -180,7 +180,7 @@
 <!-- Edit Category Modals -->
 @foreach($categories as $category)
 <div class="modal fade admin-category-modal" id="editCategoryModal{{ $category->category_id }}" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form action="{{ route('admin.update_category', $category->category_id) }}" method="POST">
                 @csrf

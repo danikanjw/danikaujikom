@@ -27,7 +27,7 @@
                             <div class="card text-center">
                                 <div class="card-body">
                                     <h5 class="card-title">Total Stock</h5>
-                                    <p class="card-text display-4">{{ $products->sum('quantity') }}</p>
+                                    <p class="card-text display-4">{{ $products->sum('warehouse_quantity') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -61,7 +61,7 @@
                                                 <td>{{ $product->name }}</td>
                                                 <td>{{ $product->category->name }}</td>
                                                 <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                                                <td>{{ $product->quantity }}</td>
+                                                <td>{{ $product->warehouse_quantity }}</td>
                                                 <td>
 <a href="{{ route('vendor.product.edit', $product->product_id) }}" class="btn btn-sm btn-warning">Edit</a>
                                                 </td>

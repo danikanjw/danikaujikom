@@ -16,7 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'username', 'name', 'password', 'email',
         'date_of_birth', 'gender', 'address', 'contact_no',
-        'city_id', 'paypal_id', 'role', 'is_active'
+        'city_id', 'paypal_id', 'role', 'vendor_status', 'is_active'
     ];
 
     // Relasi
@@ -43,5 +43,10 @@ class User extends Authenticatable
     public function cart()
     {
         return $this->hasMany(Cart::class, 'user_id');
+    }
+
+    public function stockDeliveries()
+    {
+        return $this->hasMany(StockDelivery::class, 'vendor_id', 'user_id');
     }
 }

@@ -16,6 +16,7 @@ use App\Models\UserAccount;
 use App\Models\User;
 use App\Models\City;
 use App\Mail\SendReportMail;
+use Illuminate\Validation\ValidationException;
 
 class CartController extends Controller
 {
@@ -38,7 +39,7 @@ class CartController extends Controller
 
         // Cek stok produk
         $product = Product::find($productId);
-        if ($quantity > $product->quantity) {
+        if ($quantity > $product->warehouse_quantity) {
             return redirect()->back()->with('error', 'Insufficient stock.');
         }
 
@@ -186,7 +187,7 @@ class CartController extends Controller
 
         // Cek stok
         foreach ($cartItems as $item) {
-            if ($item->quantity > $item->product->quantity) {
+            if ($item->quantity > $item->product->warehouse_quantity) {
                 return redirect()->back()->with('error', 'Insufficient stock for ' . $item->product->name);
             }
         }
@@ -198,36 +199,45 @@ class CartController extends Controller
         }
 
 
-        // Create order
-        $order = new Order();
-        $order->user_id = $userId;
-        $order->total_amount = $totalAmount;
-        $order->order_date = now();
-        $order->status = 'paid';
-        $order->shipping_service_id = $request->shipping_service_id;
-        $order->payment_method = $request->payment_method;
-        $order->payment_prepaid = $request->payment_method === 'prepaid' ? 'bank_transfer' : 'paypal';
-        // $order->payment_account_id = $request->payment_account_id ? UserAccount::where('bank_name', $request->payment_account_id)->value('payment_account_id') : null;
-        $order->payment_account_id = $request->payment_account_id ?? null;
+        $order = DB::transaction(function () use ($cartItems, $userId, $totalAmount, $request) {
+            $order = new Order();
+            $order->user_id = $userId;
+            $order->total_amount = $totalAmount;
+            $order->order_date = now();
+            $order->status = 'paid';
+            $order->shipping_service_id = $request->shipping_service_id;
+            $order->payment_method = $request->payment_method;
+            $order->payment_prepaid = $request->payment_method === 'prepaid' ? 'bank_transfer' : 'paypal';
+            $order->payment_account_id = $request->payment_account_id ?? null;
+            $order->shipping_address = User::findOrFail($userId)->address;
+            $order->save();
 
-        $order->shipping_address = User::find($userId)->address;
-        $order->save();
+            foreach ($cartItems as $item) {
+                $product = Product::where('product_id', $item->product_id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-        // Create order items and update product stock
-        foreach ($cartItems as $item) {
-            $orderItem = new OrderItem();
-            $orderItem->order_id = $order->order_id;
-            $orderItem->product_id = $item->product_id;
-            $orderItem->quantity = $item->quantity;
-            $orderItem->price = $item->product->price;
-            $orderItem->save();
+                if ($item->quantity > $product->warehouse_quantity) {
+                    throw ValidationException::withMessages([
+                        'stock' => 'Insufficient stock for ' . $product->name,
+                    ]);
+                }
 
-            // Update product stock
-            $product = $item->product;
-            $product->quantity -= $item->quantity;
-            $product->save();
-        }
+                $orderItem = new OrderItem();
+                $orderItem->order_id = $order->order_id;
+                $orderItem->product_id = $item->product_id;
+                $orderItem->quantity = $item->quantity;
+                $orderItem->price = $product->price;
+                $orderItem->save();
 
+                $product->warehouse_quantity -= $item->quantity;
+                $product->save();
+            }
+
+            Cart::where('user_id', $userId)->delete();
+
+            return $order;
+        });
 
         // Generate PDF invoice
         $pdf = Pdf::loadView('pdf.report', compact('order'));
@@ -235,11 +245,6 @@ class CartController extends Controller
         // Kirim email
         $pdfContent = $pdf->output();
         Mail::to($order->user->email)->send(new SendReportMail($pdfContent));
-
-        // Kosongkan cart
-        Cart::where('user_id', $userId)->delete();
-
-        DB::commit();
 
         return redirect()->route('product')->with('success', 'Order processed successfully.');
     }

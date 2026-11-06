@@ -63,6 +63,7 @@ Route::post('/vendor/products', [ProductController::class, 'store'])->name('vend
 Route::get('/vendor/products/{product_id}/edit', [ProductController::class, 'edit'])->name('vendor.product.edit')->middleware(['auth.session', 'role:vendor']);
 Route::put('/vendor/products/{product_id}', [ProductController::class, 'update'])->name('vendor.product.update')->middleware(['auth.session', 'role:vendor']);
 Route::delete('/vendor/products/{product_id}', [ProductController::class, 'destroy'])->name('vendor.product.destroy')->middleware(['auth.session', 'role:vendor']);
+Route::post('/vendor/products/{product_id}/stock-deliveries', [ProductController::class, 'submitStock'])->name('vendor.stock.submit')->middleware(['auth.session', 'role:vendor']);
 
 // Vendor apply route
 Route::get('/vendor/apply', function () {
@@ -83,7 +84,10 @@ use App\Http\Controllers\AdminController;
 Route::get('/admin/dashboard', function () {
     $totalCustomers = \App\Models\User::where('role', 'customer')->count();
     $activeStores = \App\Models\User::where('role', 'vendor')->where('is_active', true)->count();
-    $pendingStoreRequests = \App\Models\User::whereNull('role')->where('is_active', false)->count();
+    $pendingStoreRequests = \App\Models\User::where('role', 'vendor')
+        ->where('vendor_status', 'pending')
+        ->where('is_active', false)
+        ->count();
     $recentFeedback = \App\Models\Feedback::with('user')->latest()->take(5)->get();
     $periodStart = now()->subMonths(11)->startOfMonth();
     $paidOrders = \App\Models\Order::whereIn('status', ['paid', 'shipped']);
@@ -140,14 +144,18 @@ Route::put('/admin/categories/{categoryId}', [AdminController::class, 'updateCat
 Route::delete('/admin/categories/{categoryId}', [AdminController::class, 'deleteCategory'])->name('admin.delete_category')->middleware(['auth.session', 'role:admin']);
 
 // Admin customer management routes
-Route::get('/admin/customers', [AdminController::class, 'manageCustomers'])->name('admin.manage_customers')->middleware(['auth.session', 'role:admin']);
-Route::get('/admin/customers/{userId}/edit', [AdminController::class, 'editCustomer'])->name('admin.edit_customer')->middleware(['auth.session', 'role:admin']);
-Route::put('/admin/customers/{userId}', [AdminController::class, 'updateCustomer'])->name('admin.update_customer')->middleware(['auth.session', 'role:admin']);
-Route::delete('/admin/customers/{userId}', [AdminController::class, 'deleteCustomer'])->name('admin.delete_customer')->middleware(['auth.session', 'role:admin']);
+Route::get('/admin/users', [AdminController::class, 'manageUsers'])->name('admin.manage_users')->middleware(['auth.session', 'role:admin']);
+Route::put('/admin/users/{userId}', [AdminController::class, 'updateUser'])->name('admin.update_user')->middleware(['auth.session', 'role:admin']);
+Route::delete('/admin/users/{userId}', [AdminController::class, 'deleteUser'])->name('admin.delete_user')->middleware(['auth.session', 'role:admin']);
 
 // Admin order management routes
 Route::get('/admin/orders', [AdminController::class, 'manageOrders'])->name('admin.manage_orders')->middleware(['auth.session', 'role:admin']);
 Route::post('/admin/orders/{orderId}/ship', [AdminController::class, 'shipOrder'])->name('admin.ship_order')->middleware(['auth.session', 'role:admin']);
+
+// Admin stocks management routes
+Route::get('/admin/stocks', [AdminController::class, 'manageStocks'])->name('admin.manage_stocks')->middleware(['auth.session', 'role:admin']);
+Route::post('/admin/stocks/{deliveryId}/receive', [AdminController::class, 'receiveStock'])->name('admin.receive_stock')->middleware(['auth.session', 'role:admin']);
+Route::post('/admin/stocks/{deliveryId}/reject', [AdminController::class, 'rejectStock'])->name('admin.reject_stock')->middleware(['auth.session', 'role:admin']);
 
 // Admin feedback management routes
 Route::get('/admin/feedback', [AdminController::class, 'manageFeedback'])->name('admin.manage_feedback')->middleware(['auth.session', 'role:admin']);

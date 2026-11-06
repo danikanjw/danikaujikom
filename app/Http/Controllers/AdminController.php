@@ -7,28 +7,39 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Feedback;
+use App\Models\Product;
+use App\Models\StockDelivery;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
     // Pending Vendors
     public function pendingVendors()
     {
-        $pendingVendors = User::where('role', null)->where('is_active', false)->get();
+        $pendingVendors = User::where('role', 'vendor')
+            ->where('vendor_status', 'pending')
+            ->where('is_active', false)
+            ->get();
         return view('admin.pending_vendors', compact('pendingVendors'));
     }
 
     public function approveVendor($userId)
     {
-        $user = User::findOrFail($userId);
-        $user->update(['role' => 'vendor', 'is_active' => true]);
+        $user = User::where('role', 'vendor')
+            ->where('vendor_status', 'pending')
+            ->findOrFail($userId);
+        $user->update(['vendor_status' => 'approved', 'is_active' => true]);
         return redirect()->route('admin.pending_vendors')->with('success', 'Vendor approved successfully.');
     }
 
     public function rejectVendor($userId)
     {
-        $user = User::findOrFail($userId);
-        $user->delete(); // Or set to rejected status
+        $user = User::where('role', 'vendor')
+            ->where('vendor_status', 'pending')
+            ->findOrFail($userId);
+        $user->update(['vendor_status' => 'rejected', 'is_active' => false]);
         return redirect()->route('admin.pending_vendors')->with('success', 'Vendor application rejected.');
     }
 
@@ -61,36 +72,59 @@ class AdminController extends Controller
         return redirect()->route('admin.manage_categories')->with('success', 'Category deleted successfully.');
     }
 
-    // Customers
-    public function manageCustomers()
+    // Users
+    public function manageUsers(Request $request)
     {
-        $customers = User::where('role', 'customer')->get();
-        return view('admin.manage_customers', compact('customers'));
-    }
-
-    public function editCustomer($userId)
-    {
-        $customer = User::findOrFail($userId);
-        return view('admin.edit_customer', compact('customer'));
-    }
-
-    public function updateCustomer(Request $request, $userId)
-    {
-        $request->validate([
-            'username' => 'required|string|unique:users,username,' . $userId . ',user_id',
-            'email' => 'required|email|unique:users,email,' . $userId . ',user_id',
-            'is_active' => 'required|boolean',
+        $validated = $request->validate([
+            'role' => 'nullable|in:customer,vendor',
         ]);
-        $customer = User::findOrFail($userId);
-        $customer->update($request->only(['username', 'email', 'is_active']));
-        return redirect()->route('admin.manage_customers')->with('success', 'Customer updated successfully.');
+
+        $users = User::whereIn('role', ['customer', 'vendor'])
+            ->when($validated['role'] ?? null, fn ($query, $role) => $query->where('role', $role))
+            ->orderBy('role')
+            ->orderBy('username')
+            ->get();
+
+        $roleFilter = $validated['role'] ?? '';
+
+        return view('admin.manage_users', compact('users', 'roleFilter'));
     }
 
-    public function deleteCustomer($userId)
+    public function updateUser(Request $request, $userId)
     {
-        $customer = User::findOrFail($userId);
-        $customer->delete();
-        return redirect()->route('admin.manage_customers')->with('success', 'Customer deleted successfully.');
+        $validated = $request->validate([
+            'is_active' => 'required|boolean',
+            'role_filter' => 'nullable|in:customer,vendor',
+        ]);
+
+        $user = User::whereIn('role', ['customer', 'vendor'])->findOrFail($userId);
+        $user->update(['is_active' => $validated['is_active']]);
+
+        $roleFilter = $validated['role_filter'] ?? null;
+        $routeParameters = $roleFilter
+            ? ['role' => $roleFilter]
+            : [];
+
+        return redirect()->route('admin.manage_users', $routeParameters)
+            ->with('success', 'User updated successfully.');
+    }
+
+    public function deleteUser(Request $request, $userId)
+    {
+        $validated = $request->validate([
+            'role_filter' => 'nullable|in:customer,vendor',
+        ]);
+
+        $user = User::whereIn('role', ['customer', 'vendor'])->findOrFail($userId);
+        $user->delete();
+
+        $roleFilter = $validated['role_filter'] ?? null;
+        $routeParameters = $roleFilter
+            ? ['role' => $roleFilter]
+            : [];
+
+        return redirect()->route('admin.manage_users', $routeParameters)
+            ->with('success', 'User deleted successfully.');
     }
 
     // Orders
@@ -119,5 +153,82 @@ class AdminController extends Controller
         $feedback = Feedback::findOrFail($feedbackId);
         $feedback->delete();
         return redirect()->route('admin.manage_feedback')->with('success', 'Feedback deleted successfully.');
+    }
+
+    public function manageStocks()
+    {
+        $stockDeliveries = StockDelivery::with(['vendor', 'items.product'])
+            ->orderByRaw("CASE WHEN status = 'submitted' THEN 0 ELSE 1 END")
+            ->latest('submitted_at')
+            ->paginate(15);
+
+        return view('admin.manage_stocks', compact('stockDeliveries'));
+    }
+
+    public function receiveStock(Request $request, $deliveryId)
+    {
+        $validated = $request->validate([
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|integer|min:0|max:4294967295',
+        ]);
+
+        DB::transaction(function () use ($validated, $deliveryId) {
+            $delivery = StockDelivery::with('items')
+                ->lockForUpdate()
+                ->findOrFail($deliveryId);
+
+            if ($delivery->status !== 'submitted') {
+                throw ValidationException::withMessages([
+                    'delivery' => 'This stock submission has already been reviewed.',
+                ]);
+            }
+
+            $itemIds = $delivery->items->pluck('stock_delivery_item_id')->map(fn ($id) => (string) $id)->all();
+            $quantityIds = array_map('strval', array_keys($validated['quantities']));
+
+            if (array_diff($itemIds, $quantityIds) || array_diff($quantityIds, $itemIds)) {
+                throw ValidationException::withMessages([
+                    'quantities' => 'Provide a verified quantity for every product in this submission.',
+                ]);
+            }
+
+            foreach ($delivery->items as $item) {
+                $receivedQuantity = $validated['quantities'][$item->stock_delivery_item_id];
+
+                $item->update(['quantity_received' => $receivedQuantity]);
+                Product::where('product_id', $item->product_id)
+                    ->increment('warehouse_quantity', $receivedQuantity);
+            }
+
+            $delivery->update([
+                'status' => 'received',
+                'received_by' => Session::get('user_id'),
+                'received_at' => now(),
+            ]);
+        });
+
+        return redirect()->route('admin.manage_stocks')
+            ->with('success', 'Stock submission verified and received stock added to product inventory.');
+    }
+
+    public function rejectStock($deliveryId)
+    {
+        DB::transaction(function () use ($deliveryId) {
+            $delivery = StockDelivery::lockForUpdate()->findOrFail($deliveryId);
+
+            if ($delivery->status !== 'submitted') {
+                throw ValidationException::withMessages([
+                    'delivery' => 'This stock submission has already been reviewed.',
+                ]);
+            }
+
+            $delivery->update([
+                'status' => 'rejected',
+                'received_by' => Session::get('user_id'),
+            ]);
+        });
+
+        return redirect()->route('admin.manage_stocks')
+            ->with('success', 'Stock submission rejected. Product inventory was not changed.');
     }
 }

@@ -64,11 +64,6 @@ Add New Product
         </div>
 
         <div class="mb-3">
-            <label for="quantity" class="form-label">Stock</label>
-            <input type="number" class="form-control" id="quantity" name="quantity" value="{{ old('quantity', $product->quantity ?? '') }}" min="0" required>
-        </div>
-
-        <div class="mb-3">
             <label for="photo" class="form-label">Photo</label>
             <input type="file" class="form-control" id="photo" name="photo" accept="image/*" @if(!isset($product)) required @endif>
             @if(isset($product) && $product->image_url)

@@ -13,7 +13,7 @@ class Product extends Model
     protected $primaryKey = 'product_id';
     public $timestamps = true;
 
-    protected $fillable = ['name', 'code', 'description', 'price', 'quantity', 'image_url', 'category_id', 'vendor_id'];
+    protected $fillable = ['name', 'code', 'description', 'price', 'warehouse_quantity', 'image_url', 'category_id', 'vendor_id'];
 
     public function category()
     {
@@ -33,6 +33,11 @@ class Product extends Model
     public function cart()
     {
         return $this->hasMany(Cart::class, 'product_id');
+    }
+
+    public function stockDeliveryItems()
+    {
+        return $this->hasMany(StockDeliveryItem::class, 'product_id', 'product_id');
     }
 
     public static function generateProductCode($categoryId)
