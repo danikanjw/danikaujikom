@@ -14,14 +14,19 @@ class AdminController extends Controller
     // Pending Vendors
     public function pendingVendors()
     {
-        $pendingVendors = User::where('role', null)->where('is_active', false)->get();
+        $pendingVendors = User::where('role', 'vendor')
+            ->where('vendor_status', 'pending')
+            ->where('is_active', false)
+            ->get();
         return view('admin.pending_vendors', compact('pendingVendors'));
     }
 
     public function approveVendor($userId)
     {
-        $user = User::findOrFail($userId);
-        $user->update(['role' => 'vendor', 'is_active' => true]);
+        $user = User::where('role', 'vendor')
+            ->where('vendor_status', 'pending')
+            ->findOrFail($userId);
+        $user->update(['vendor_status' => 'approved', 'is_active' => true]);
         return redirect()->route('admin.pending_vendors')->with('success', 'Vendor approved successfully.');
     }
 
