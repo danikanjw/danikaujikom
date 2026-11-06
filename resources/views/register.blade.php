@@ -15,7 +15,7 @@
 <body>
     <div class="glass-card">
         <h4 class="form-title">FORM REGISTRASI</h4>
-        <form method="POST" action="{{ route('register') }}">
+        <form method="POST" action="{{ route('register.post') }}">
             @csrf
             @if ($errors->any())
                 <div class="alert alert-danger" role="alert">
@@ -35,9 +35,9 @@
             </div>
 
             <div class="row mb-3">
-                <label for="fullname" class="col-12 col-sm-3 col-form-label">Full Name</label>
+                <label for="name" class="col-12 col-sm-3 col-form-label">Full Name</label>
                 <div class="col-12 col-sm-9">
-                    <input type="text" id="fullname" name="fullname" class="form-control" required>
+                    <input type="text" id="name" name="name" class="form-control" maxlength="100" required>
                 </div>
             </div>
 
@@ -106,13 +106,6 @@
                 <label for="contact" class="col-12 col-sm-3 col-form-label">Contact No</label>
                 <div class="col-12 col-sm-9">
                     <input type="text" id="contact" name="contact" class="form-control">
-                </div>
-            </div>
-
-            <div class="row mb-3">
-                <label for="paypal" class="col-12 col-sm-3 col-form-label">PayPal ID</label>
-                <div class="col-12 col-sm-9">
-                    <input type="email" id="paypal" name="paypal" class="form-control">
                 </div>
             </div>
 

@@ -109,13 +109,6 @@
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <label for="paypal" class="col-12 col-sm-3 col-form-label">PayPal ID</label>
-                <div class="col-12 col-sm-9">
-                    <input type="email" id="paypal" name="paypal" class="form-control">
-                </div>
-            </div>
-
             <div class="d-flex justify-content-center">
                 <button type="submit" class="btn btn-primary mx-2">Submit</button>
                 <button type="reset" class="btn btn-secondary">Clear</button>

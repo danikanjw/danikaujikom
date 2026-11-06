@@ -83,7 +83,10 @@ use App\Http\Controllers\AdminController;
 Route::get('/admin/dashboard', function () {
     $totalCustomers = \App\Models\User::where('role', 'customer')->count();
     $activeStores = \App\Models\User::where('role', 'vendor')->where('is_active', true)->count();
-    $pendingStoreRequests = \App\Models\User::whereNull('role')->where('is_active', false)->count();
+    $pendingStoreRequests = \App\Models\User::where('role', 'vendor')
+        ->where('vendor_status', 'pending')
+        ->where('is_active', false)
+        ->count();
     $recentFeedback = \App\Models\Feedback::with('user')->latest()->take(5)->get();
     $periodStart = now()->subMonths(11)->startOfMonth();
     $paidOrders = \App\Models\Order::whereIn('status', ['paid', 'shipped']);

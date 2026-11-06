@@ -16,7 +16,7 @@ class User extends Authenticatable
     protected $fillable = [
         'username', 'name', 'password', 'email',
         'date_of_birth', 'gender', 'address', 'contact_no',
-        'city_id', 'paypal_id', 'role', 'is_active'
+        'city_id', 'role', 'vendor_status', 'is_active'
     ];
 
     // Relasi
