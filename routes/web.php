@@ -52,8 +52,28 @@ Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update'
 // Vendor routes
 Route::get('/vendor/dashboard', function () {
     $vendorId = Session::get('user_id');
-    $products = \App\Models\Product::where('vendor_id', $vendorId)->with('category')->paginate(10);
-    return view('vendor.dashboard', compact('products'));
+    $totalProducts = \App\Models\Product::where('vendor_id', $vendorId)->count();
+    $availableStock = \App\Models\Product::where('vendor_id', $vendorId)->sum('warehouse_quantity');
+    $pendingStockSubmissions = \App\Models\StockDelivery::where('vendor_id', $vendorId)
+        ->where('status', 'submitted')
+        ->count();
+    $products = \App\Models\Product::where('vendor_id', $vendorId)
+        ->with('category')
+        ->withCount([
+            'stockDeliveryItems',
+            'orderItems',
+            'stockDeliveryItems as pending_stock_submissions_count' => fn ($query) => $query
+                ->whereHas('delivery', fn ($deliveryQuery) => $deliveryQuery->where('status', 'submitted')),
+        ])
+        ->latest()
+        ->paginate(5);
+
+    return view('vendor.dashboard', compact(
+        'products',
+        'totalProducts',
+        'availableStock',
+        'pendingStockSubmissions'
+    ));
 })->name('vendor.dashboard')->middleware(['auth.session', 'role:vendor']);
 
 // Vendor product management routes
@@ -63,6 +83,7 @@ Route::post('/vendor/products', [ProductController::class, 'store'])->name('vend
 Route::get('/vendor/products/{product_id}/edit', [ProductController::class, 'edit'])->name('vendor.product.edit')->middleware(['auth.session', 'role:vendor']);
 Route::put('/vendor/products/{product_id}', [ProductController::class, 'update'])->name('vendor.product.update')->middleware(['auth.session', 'role:vendor']);
 Route::delete('/vendor/products/{product_id}', [ProductController::class, 'destroy'])->name('vendor.product.destroy')->middleware(['auth.session', 'role:vendor']);
+Route::post('/vendor/products/{product_id}/stock-deliveries', [ProductController::class, 'submitStock'])->name('vendor.stock.submit')->middleware(['auth.session', 'role:vendor']);
 
 // Vendor apply route
 Route::get('/vendor/apply', function () {
@@ -155,6 +176,11 @@ Route::post('/admin/orders/{orderId}/ship', [AdminController::class, 'shipOrder'
 // Admin feedback management routes
 Route::get('/admin/feedback', [AdminController::class, 'manageFeedback'])->name('admin.manage_feedback')->middleware(['auth.session', 'role:admin']);
 Route::delete('/admin/feedback/{feedbackId}', [AdminController::class, 'deleteFeedback'])->name('admin.delete_feedback')->middleware(['auth.session', 'role:admin']);
+
+// Admin stock submission verification routes
+Route::get('/admin/stocks', [AdminController::class, 'manageStocks'])->name('admin.manage_stocks')->middleware(['auth.session', 'role:admin']);
+Route::post('/admin/stocks/{deliveryId}/receive', [AdminController::class, 'receiveStock'])->name('admin.receive_stock')->middleware(['auth.session', 'role:admin']);
+Route::post('/admin/stocks/{deliveryId}/reject', [AdminController::class, 'rejectStock'])->name('admin.reject_stock')->middleware(['auth.session', 'role:admin']);
 
 // Register
 Route::get('/register', function () {

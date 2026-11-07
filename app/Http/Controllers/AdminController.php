@@ -7,7 +7,11 @@ use App\Models\User;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Feedback;
+use App\Models\Product;
+use App\Models\StockDelivery;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -124,5 +128,82 @@ class AdminController extends Controller
         $feedback = Feedback::findOrFail($feedbackId);
         $feedback->delete();
         return redirect()->route('admin.manage_feedback')->with('success', 'Feedback deleted successfully.');
+    }
+
+    public function manageStocks()
+    {
+        $stockDeliveries = StockDelivery::with(['vendor', 'items.product'])
+            ->orderByRaw("CASE WHEN status = 'submitted' THEN 0 ELSE 1 END")
+            ->latest('submitted_at')
+            ->paginate(15);
+
+        return view('admin.manage_stocks', compact('stockDeliveries'));
+    }
+
+    public function receiveStock(Request $request, $deliveryId)
+    {
+        $validated = $request->validate([
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|integer|min:0|max:4294967295',
+        ]);
+
+        DB::transaction(function () use ($validated, $deliveryId) {
+            $delivery = StockDelivery::with('items')
+                ->lockForUpdate()
+                ->findOrFail($deliveryId);
+
+            if ($delivery->status !== 'submitted') {
+                throw ValidationException::withMessages([
+                    'delivery' => 'This stock submission has already been reviewed.',
+                ]);
+            }
+
+            $itemIds = $delivery->items->pluck('stock_delivery_item_id')->map(fn ($id) => (string) $id)->all();
+            $quantityIds = array_map('strval', array_keys($validated['quantities']));
+
+            if (array_diff($itemIds, $quantityIds) || array_diff($quantityIds, $itemIds)) {
+                throw ValidationException::withMessages([
+                    'quantities' => 'Provide a verified quantity for every product in this submission.',
+                ]);
+            }
+
+            foreach ($delivery->items as $item) {
+                $receivedQuantity = $validated['quantities'][$item->stock_delivery_item_id];
+
+                $item->update(['quantity_received' => $receivedQuantity]);
+                Product::where('product_id', $item->product_id)
+                    ->increment('warehouse_quantity', $receivedQuantity);
+            }
+
+            $delivery->update([
+                'status' => 'received',
+                'received_by' => Session::get('user_id'),
+                'received_at' => now(),
+            ]);
+        });
+
+        return redirect()->route('admin.manage_stocks')
+            ->with('success', 'Stock submission verified and received stock added to product inventory.');
+    }
+
+    public function rejectStock($deliveryId)
+    {
+        DB::transaction(function () use ($deliveryId) {
+            $delivery = StockDelivery::lockForUpdate()->findOrFail($deliveryId);
+
+            if ($delivery->status !== 'submitted') {
+                throw ValidationException::withMessages([
+                    'delivery' => 'This stock submission has already been reviewed.',
+                ]);
+            }
+
+            $delivery->update([
+                'status' => 'rejected',
+                'received_by' => Session::get('user_id'),
+            ]);
+        });
+
+        return redirect()->route('admin.manage_stocks')
+            ->with('success', 'Stock submission rejected. Product inventory was not changed.');
     }
 }
