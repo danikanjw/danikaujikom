@@ -4,7 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login Toko Alat Kesehatan</title>
+    <title>Login | AlkesHub</title>
+    <link rel="icon" type="image/png" href="{{ asset('Alkes Hub Logo.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link href="{{ asset('css/login.css') }}?v={{ time() }}" rel="stylesheet">
 </head>
@@ -13,7 +14,9 @@
 
     <div class="glass-card text-center">
         <div class="d-flex justify-content-center align-items-center mb-4">
-            <div class="logo-box">LOGO</div>
+            <div class="logo-box overflow-hidden p-0">
+                <img src="{{ asset('Alkes Hub Logo.png') }}" alt="Alkes Hub" width="80" height="80">
+            </div>
             <div class="text-start ms-3">
                 <p class="welcome-text mb-0">Selamat datang di</p>
                 <h6 class="fw-bold mb-0">Toko Alat Kesehatan</h6>

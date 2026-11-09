@@ -6,10 +6,13 @@
 
 <header class="alkeshub-header">
     @if(request()->routeIs('admin.*'))
-        <h1 class="alkeshub-header-title">AlkesHub Admin Page</h1>
+        <div class="d-flex align-items-center gap-3">
+            <img class="alkeshub-logo" src="{{ asset('Alkes Hub Logo.png') }}" alt="Alkes Hub">
+            <h1 class="alkeshub-header-title">AlkesHub Admin Page</h1>
+        </div>
     @else
         <a class="alkeshub-header-brand" href="{{ $headerHomeRoute }}">
-            <span class="alkeshub-header-mark">A</span>
+            <img class="alkeshub-logo" src="{{ asset('Alkes Hub Logo.png') }}" alt="">
             <span>ALKESHUB</span>
         </a>
     @endif

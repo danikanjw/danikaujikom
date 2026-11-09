@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@yield('title', 'Toko Alat Kesehatan')</title>
+    <title>@yield('title', 'AlkesHub')</title>
+    <link rel="icon" type="image/png" href="{{ asset('Alkes Hub Logo.png') }}" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
@@ -47,6 +48,24 @@
             color: #102b45;
             font-size: 18px;
             font-weight: 800;
+        }
+
+        .alkeshub-logo {
+            display: block;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+
+        .admin-brand-logo {
+            display: block;
+            width: 40px;
+            height: 40px;
+            flex: 0 0 40px;
+            border-radius: 9px;
+            object-fit: cover;
         }
 
         .alkeshub-header-profile {

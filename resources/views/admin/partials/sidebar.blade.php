@@ -1,6 +1,6 @@
 <aside class="admin-sidebar">
     <a class="admin-brand" href="{{ route('admin.dashboard') }}">
-        <span class="admin-brand-mark">A</span>
+        <img class="admin-brand-logo" src="{{ asset('Alkes Hub Logo.png') }}" alt="">
         <span>ALKESHUB</span>
     </a>
     <div class="admin-nav-label">Menu</div>

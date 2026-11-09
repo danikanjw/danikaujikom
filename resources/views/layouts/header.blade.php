@@ -4,7 +4,10 @@
       @php
         $role = Session::get('role');
       @endphp
-      <a class="navbar-brand" href="{{ $role === 'admin' ? route('admin.dashboard') : route('home') }}">Toko Alat Kesehatan</a>
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ $role === 'admin' ? route('admin.dashboard') : route('home') }}">
+        <img src="{{ asset('Alkes Hub Logo.png') }}" alt="" width="42" height="42" class="rounded">
+        <span>ALKESHUB</span>
+      </a>
       <div class="d-flex align-items-center">
         @if(Session::has('user_id'))
           @if($role === 'admin')
